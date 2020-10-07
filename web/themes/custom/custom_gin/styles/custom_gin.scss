@@ -1,0 +1,297 @@
+// Import breakpoint
+@import "node_modules/breakpoint-sass/stylesheets/breakpoint";
+
+// Import variables, abstractions, base styles and components using globbing.
+//
+// Globbing will always import files alphabetically. Optimally, all your
+// components should be self-contained and explicit enough to not have any
+// contained styles leak into unrelated components: The import order should not
+// affect the result.
+//
+// If there are variables, functions or mixins that depend on each other and
+// therefore need to be imported in a specific order you can import them
+// directly. Variables-, function- or mixin providing partials should never
+// output any styles themselves: Importing them multiple times to resolve
+// dependencies shouldn't be a problem.
+
+// Helpers
+@import "helpers/**/*";
+
+// Settings
+@import "settings/**/*";
+
+// Components
+@import "components/defaults";
+@import "components/body";
+@import "components/color-overrides";
+@import "components/regions";
+@import "components/layers";
+@import "components/title";
+@import "components/user";
+@import "components/breadcrumbs";
+@import "components/claro_improvements";
+@import "components/entity_reference_layout";
+@import "components/layout_node_form";
+@import "components/paragraphs";
+@import "components/paragraphs_ee";
+@import "components/tabs";
+@import "components/views";
+@import "components/media-library";
+@import "components/table";
+@import "components/tabledrag";
+@import "components/ckeditor";
+@import "components/form";
+// @import "components/custom-select";
+@import "components/button";
+@import "components/dropbutton";
+@import "components/action-link";
+@import "components/chosen";
+@import "components/pager";
+@import "components/help";
+@import "components/system-report";
+@import "components/messages";
+@import "components/field-ui";
+@import "components/card";
+@import "components/elements";
+@import "components/admin-item";
+@import "components/focus";
+@import "components/system-modules";
+@import "components/dialog";
+@import "components/throbber";
+@import "components/update";
+@import "components/ief";
+@import "components/status-report";
+@import "components/divider";
+@import "components/progress";
+@import "components/upgrade-status";
+@import "components/insert";
+@import "components/system-themes";
+@import "components/panel";
+@import "components/blocks";
+@import "components/webform";
+@import "components/settings";
+@import "components/module-filter";
+@import "components/batch";
+@import "components/linkit";
+@import "components/contextual";
+
+html, body, .page-wrapper, .toolbar-menu-area {
+  height: 100%;
+  width: 100%;
+  display: table;
+}
+
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+
+  // @include mq($breakpointSmall) {
+  //   flex-direction: column;
+  // }
+
+  @include mq($breakpointSmall) {
+    flex-direction: row;
+  }
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+
+  // @include mq($breakpointSmall) {
+  //   flex-direction: row;
+  // }
+
+  @include mq($breakpointMedium) {
+    flex-direction: row;
+  }
+}
+
+.primary-content-area {
+  padding: 1.5rem;
+  background: var(--colorGinLayerBackground);
+  border: 1px solid var(--colorGinLayerBorder);
+  -webkit-box-shadow: -8px -8px 40px rgba(245,247,251,0.8), 20px 20px 40px rgba(226,229,236,0.98), -6px -6px 16px rgba(0,0,0,0.02);
+  box-shadow: -8px -8px 40px rgba(245,247,251,0.8), 20px 20px 40px rgba(226,229,236,0.98), -6px -6px 16px rgba(0,0,0,0.02);
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  border-radius: 8px;
+
+  flex-grow: 1;
+  margin-right: 0px;
+
+  // @include mq($breakpointSmall) {
+  //   margin-right: 2rem;
+  // }
+
+  @include mq($breakpointMedium) {
+    margin-right: m#{i}n(5vw, 64px);
+  }
+}
+
+.custom-gin-sidebar {
+  width: 100%;
+
+  margin-top: 1rem;
+
+  // @include mq($breakpointSmall) {
+  //   margin-top: 2rem;
+  //   width: 33%;
+  // }
+
+  @include mq($breakpointMedium) {
+    margin-top: m#{i}n(5vw, 64px);
+    width: var(--ginSidebarWidth) !important;
+  }
+
+  @include mq($breakpointLarge) {
+    flex: none;
+    width: var(--ginSidebarWidth) !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: 100%;
+  }
+
+  .block {
+    padding: 1.5rem;
+    background: var(--colorGinLayerBackground);
+    border: 1px solid var(--colorGinLayerBorder);
+    -webkit-box-shadow: -8px -8px 40px rgba(245,247,251,0.8), 20px 20px 40px rgba(226,229,236,0.98), -6px -6px 16px rgba(0,0,0,0.02);
+    box-shadow: -8px -8px 40px rgba(245,247,251,0.8), 20px 20px 40px rgba(226,229,236,0.98), -6px -6px 16px rgba(0,0,0,0.02);
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    border-radius: 8px;
+
+    margin-bottom: 1rem;
+
+    @include mq($breakpointSmall) {
+      margin-bottom: 2rem;
+    }
+
+    @include mq($breakpointMedium) {
+      margin-bottom: m#{i}n(5vw, 64px);
+    }
+    .gin--dark-mode & {
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.page-title, .primary-content-area {
+  margin-top: 1rem;
+
+  @include mq($breakpointSmall) {
+    margin-top: 2rem;
+  }
+
+  @include mq($breakpointMedium) {
+    margin-top: m#{i}n(5vw, 64px);
+  }
+}
+
+.primary-page-area {
+  flex-grow: 1;
+}
+
+.toolbar-menu-area {
+  padding: 0;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+  background: var(--colorGinLayerBackground);
+  -webkit-box-shadow: 0 0 48px rgba(0, 0, 0, 0.075);
+  box-shadow: 0 0 48px rgba(0, 0, 0, 0.075);
+
+  @include mq($breakpointSmall) {
+    width: 160px;
+  }
+
+  .block h2 {
+    display: none;
+  }
+
+  ul.menu {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    @include mq($breakpointSmall) {
+      width: 160px;
+      flex-direction: column;
+    }
+    li {
+      list-style: none;
+      display: flex;
+      flex: 1;
+      padding: 0px;
+      border-bottom: 1px;
+      a {
+        padding: 1.5rem;
+        display: table;
+        flex: 1;
+        font-weight: 500;
+        text-align: center;
+        &:hover {
+          background-color: var(--colorGinItemHover);
+        }
+      }
+    }
+  }
+}
+
+ul, .item-list ul {
+  margin-left: 0px;
+}
+
+.links a {
+  @extend .button;
+}
+
+.node--view-mode-teaser {
+  margin-bottom: 1.5rem;
+  display: table;
+}
+
+.page-title {
+  overflow: inherit;
+}
+
+.shortcut-action {
+  display: none !important;
+}
+
+.field--name-field-photo {
+  float: left;
+  margin-right: 1.5rem;
+}
+
+.view-contestants, .view-teams {
+  .views-row {
+    display: flex;
+    margin-bottom: 1.5rem;
+    .views-field-field-photo, .views-field-field-team-photo {
+      margin-right: 1.5rem;
+    }
+    h5 {
+      margin-top: 0px;
+    }
+    .more-link {
+      text-align: left;
+      margin-top: .75rem;
+    }
+  }
+}
+
+blockquote {
+  border-left: 5px solid var(--colorGinPrimary);
+  margin-left: 0;
+  padding-left: 1.5rem;
+}
+
+.page-wrapper a:focus {
+  outline: none;
+  box-shadow: none;
+}

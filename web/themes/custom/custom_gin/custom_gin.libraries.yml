@@ -1,0 +1,48 @@
+custom_gin:
+  css:
+    theme:
+      dist/css/custom_gin.css: { minified: true }
+  js:
+    dist/js/custom_gin_ckeditor.js: { minified: true }
+
+custom_gin_init:
+  header: true
+  js:
+    dist/js/custom_gin_init.js: { minified: true, preprocess: false, weight: -99 }
+
+custom_gin_toolbar:
+  css:
+    theme:
+      dist/css/custom_gin_toolbar.css: { minified: true }
+  js:
+    dist/js/custom_gin_toolbar.js: { minified: true }
+
+custom_gin_classic_toolbar:
+  css:
+    theme:
+      dist/css/custom_gin_classic_toolbar.css: { minified: true }
+  js:
+    dist/js/custom_gin_toolbar.js: { minified: true }
+
+custom_gin_horizontal_toolbar:
+  css:
+    theme:
+      dist/css/custom_gin_horizontal_toolbar.css: { minified: true }
+  js:
+    dist/js/custom_gin_toolbar.js: { minified: true }
+
+custom_gin_accent:
+  css:
+    theme:
+      dist/css/custom_gin_accent.css: { minified: true }
+  js:
+    dist/js/custom_gin_accent.js: { minified: true }
+
+custom_gin_settings:
+  js:
+    dist/js/custom_gin_settings.js: { minified: true }
+
+custom_gin_dialog:
+  css:
+    theme:
+      dist/css/custom_gin_dialog.css: { minified: true }

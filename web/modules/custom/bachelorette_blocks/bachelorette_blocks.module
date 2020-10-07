@@ -1,0 +1,348 @@
+<?php
+
+/**
+ * @file
+ * Contains bachelorette_blocks.module.
+ */
+
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\Core\Link;
+
+/**
+ * Implements hook_help().
+ */
+function bachelorette_blocks_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the bachelorette_blocks module.
+    case 'help.page.bachelorette_blocks':
+      $output .= '<h3>' . t('Aloha') . '</h3>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function bachelorette_blocks_theme() {
+  return [
+    'bachelorette_blocks_roster_results' => [
+      'render element' => 'children',
+      'variables' => [
+        'results' => null,
+      ],
+    ],
+  ];
+}
+
+function getAllTeams() {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title from {node_field_data} as n
+  WHERE n.type = 'team'
+  AND n.status = 1;";
+
+  return $connection->query($sql)->fetchAll();
+}
+
+function getLastLockedWeek() {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title from {node_field_data} as n
+  INNER JOIN {node__field_locked} as l
+  WHERE n.type = 'scoring_increment'
+  AND l.entity_id = n.nid
+  AND l.field_locked_value = 1
+  AND n.status = 1
+  ORDER BY n.created DESC
+  LIMIT 1;";
+
+  return $connection->query($sql)->fetchObject();
+}
+
+function getLockedWeeks() {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title from {node_field_data} as n
+  INNER JOIN {node__field_locked} as l
+  WHERE n.type = 'scoring_increment'
+  AND l.entity_id = n.nid
+  AND l.field_locked_value = 1
+  AND n.status = 1;";
+
+  return $connection->query($sql)->fetchAll();
+}
+
+function getLockedWeeksByTeam($team_id) {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title, s.entity_id as {roster_nid} from node_field_data as n
+  INNER JOIN {node__field_locked} as l
+  INNER JOIN {node__field_scoring_increment} as s
+  INNER JOIN {node__field_team} as t
+  WHERE n.type = 'scoring_increment'
+  AND l.entity_id = n.nid
+  AND s.field_scoring_increment_target_id = n.nid
+  AND t.entity_id = s.entity_id
+  AND t.field_team_target_id = :tid
+  AND l.field_locked_value = 1
+  AND n.status = 1;";
+
+  return $connection->query($sql, [':tid' => $team_id])->fetchAll();
+}
+
+/**
+ * Gather Roster results
+ *
+ */
+function getWeeklyPointsByTeam($team_id, $week_id) {
+  $connection = \Drupal::database();
+
+  // Find a roster's contestants for the team in this week.
+  $sql = "SELECT field_contestants_target_id as contestant from {node__field_contestants} as c
+  INNER JOIN {node__field_team} as t
+  INNER JOIN {node__field_scoring_increment} as s
+  WHERE t.field_team_target_id = :tid
+  AND s.field_scoring_increment_target_id = :wid
+  AND c.entity_id = s.entity_id
+  AND t.entity_id = c.entity_id;";
+  $contestant_ids = $connection->query($sql, [':tid' => $team_id, ':wid' => $week_id])->fetchCol();
+
+  $connection = \Drupal::database();
+  $sql = "SELECT SUM(p.field_points_value) as points from {node__field_scoring_events} as e
+  INNER JOIN {node__field_contestant} as c
+  INNER JOIN {node__field_stat} as s
+  INNER JOIN {node__field_points} as p
+  WHERE c.entity_id IN (e.field_scoring_events_target_id)
+  AND s.entity_id IN (e.field_scoring_events_target_id)
+  AND p.entity_id IN (s.field_stat_target_id)
+  AND c.field_contestant_target_id IN (:cids[])
+  AND e.bundle = 'scoring_increment' AND e.entity_id = :wid;";
+  $result = $connection->query($sql, [':wid' => $week_id, ':cids[]' => $contestant_ids]);
+
+  $total = 0;
+  foreach ($result as $record) {
+    $total += $record->points;
+  }
+
+  return $total;
+}
+
+/**
+ * Gather Roster results
+ *
+ */
+function getRosterResults() {
+  $node = \Drupal::routeMatch()->getParameter('node');
+  $results = '';
+  if ($node instanceof \Drupal\node\NodeInterface) {
+    $header = array(
+      array('data' => t('Contestant')),
+      array('data' => t('Stat')),
+      array('data' => t('Points')),
+    );
+
+    $nid = $node->id();
+    $week_id = $node->get('field_scoring_increment')->target_id;
+    $contestants = $node->get('field_contestants')->referencedEntities();
+    $contestant_ids = array();
+    foreach ($contestants as $contestant) {
+      $contestant_ids[] = $contestant->id();
+    }
+
+    $connection = \Drupal::database();
+    $sql = "SELECT e.field_scoring_events_target_id, c.field_contestant_target_id, s.field_stat_target_id, p.field_points_value, n.title as stat_title, nn.title as cont_title from {node__field_scoring_events} as e
+    INNER JOIN {node__field_contestant} as c
+    INNER JOIN {node__field_stat} as s
+    INNER JOIN {node__field_points} as p
+    INNER JOIN {node_field_data} as n
+    INNER JOIN {node_field_data} as nn
+    WHERE c.entity_id IN (e.field_scoring_events_target_id)
+    AND s.entity_id IN (e.field_scoring_events_target_id)
+    AND p.entity_id IN (s.field_stat_target_id)
+    AND n.nid IN (s.field_stat_target_id)
+    AND nn.nid IN (c.field_contestant_target_id)
+    AND c.field_contestant_target_id IN (:cids[])
+    AND e.bundle = 'scoring_increment' AND e.entity_id = :wid;";
+    $result = $connection->query($sql, [':wid' => $week_id, ':cids[]' => $contestant_ids]);
+
+    $total = 0;
+    foreach ($result as $record) {
+      $total += $record->field_points_value;
+      $rows[] = array(
+        'contestant' => array(
+          'data' => $record->cont_title,
+        ),
+        'stat' => array(
+          'data' => $record->stat_title,
+        ),
+        'points' => array(
+          'data' => $record->field_points_value,
+          'class' => 'points',
+        ),
+      );
+    }
+
+    $results = array(
+      '#markup' => '',
+    );
+
+    $results['result_table'] = array(
+      '#theme' => 'table',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#footer' => array(
+        'data' => array(
+          array(
+            'data' => 'TOTAL',
+          ),
+          array(
+            'data' => '',
+          ),
+          array(
+            'data' => $total,
+          ),
+        ),
+      ),
+    );
+  }
+
+  return [
+    'results' => $results,
+  ];
+}
+
+/**
+ * Gather Roster results
+ *
+ */
+function getTeamScoring() {
+  $teams = getAllTeams();
+  $weeks = getLockedWeeks();
+  $rows = array();
+  foreach ($teams as $team) {
+    $total = 0;
+    foreach ($weeks as $week) {
+      $total += getWeeklyPointsByTeam($team->nid, $week->nid);
+    }
+
+    $rows[] = array(
+      'team' => array(
+        'data' => Link::fromTextAndUrl($team->title, Url::fromRoute('entity.node.canonical', ['node' => $team->nid])),
+      ),
+      'points' => array(
+        'data' => $total,
+        'class' => 'points',
+      ),
+    );
+  }
+
+  $header = array(
+    array('data' => t('Team')),
+    array('data' => t('Points')),
+  );
+
+  $results = array(
+    '#markup' => '',
+  );
+
+  $results['result_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+  );
+
+  return [
+    'results' => $results,
+  ];
+}
+
+function getLastWeekResults() {
+  $teams = getAllTeams();
+  $week = getLastLockedWeek();
+  $rows = array();
+  foreach ($teams as $team) {
+    $total = getWeeklyPointsByTeam($team->nid, $week->nid);
+
+    $rows[] = array(
+      'team' => array(
+        'data' => Link::fromTextAndUrl($team->title, Url::fromRoute('entity.node.canonical', ['node' => $team->nid])),
+      ),
+      'points' => array(
+        'data' => $total,
+        'class' => 'points',
+      ),
+    );
+  }
+
+  $header = array(
+    array('data' => t('Team')),
+    array('data' => t('Points')),
+  );
+
+  $results = array(
+    '#markup' => '',
+  );
+
+  $results['result_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+  );
+
+  return [
+    'results' => $results,
+  ];
+}
+
+function getWeeklyResults() {
+  $node = \Drupal::routeMatch()->getParameter('node');
+  $results = '';
+  if ($node instanceof \Drupal\node\NodeInterface) {
+    $team_id = $node->id();
+    $weeks = getLockedWeeksByTeam($team_id);
+    $rows = array();
+    $total = 0;
+    foreach ($weeks as $week) {
+      $points = getWeeklyPointsByTeam($team_id, $week->nid);
+      $rows[] = array(
+        'week' => array(
+          'data' => Link::fromTextAndUrl($week->title, Url::fromRoute('entity.node.canonical', ['node' => $week->roster_nid])),
+        ),
+        'points' => array(
+          'data' => $points,
+          'class' => 'points',
+        ),
+      );
+      $total += $points;
+    }
+
+    $header = array(
+      array('data' => t('Week')),
+      array('data' => t('Points')),
+    );
+
+    $results = array(
+      '#markup' => '',
+    );
+
+    $results['result_table'] = array(
+      '#theme' => 'table',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#footer' => array(
+        'data' => array(
+          array(
+            'data' => 'TOTAL',
+          ),
+          array(
+            'data' => $total,
+          ),
+        ),
+      ),
+    );
+  }
+
+  return [
+    'results' => $results,
+  ];
+}

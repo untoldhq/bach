@@ -1,0 +1,6 @@
+name: 'Bachelorette Blocks'
+type: module
+description: 'Bach stuff'
+core: 8.x
+core_version_requirement: ^8 || ^9
+package: 'Bachelorette'
