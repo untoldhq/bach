@@ -95,6 +95,9 @@ function getLockedWeeksByTeam($team_id) {
  *
  */
 function getWeeklyPointsByTeam($team_id, $week_id) {
+  if (!$week_id || !$team_id) {
+    return 0;
+  }
   $connection = \Drupal::database();
 
   // Find a roster's contestants for the team in this week.
