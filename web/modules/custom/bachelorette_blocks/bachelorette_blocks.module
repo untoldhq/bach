@@ -293,6 +293,13 @@ function getLastWeekResults() {
   $teams = getAllTeams();
   $week = getLastLockedWeek();
   $rows = array();
+  if (!$week) {
+    return [
+      'results' => array(
+        '#markup' => '',
+      ),
+    ];
+  }
   foreach ($teams as $team) {
     $total = getWeeklyPointsByTeam($team->nid, $week->nid);
 

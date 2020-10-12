@@ -45,48 +45,48 @@ function custom_gin_preprocess_html(&$variables) {
     }
 
     // Edit form? Use the new Gin Edit form layout.
-    if (
-      $route == 'node.add' ||
-      $route == 'entity.node.content_translation_add' ||
-      $route == 'quick_node_clone.node.quick_clone' ||
-      $route == 'entity.node.edit_form' ||
-      $route == 'entity.group_content.create_form'
-    ) {
-      $variables['attributes']['class'][] = 'gin--edit-form';
-    }
+    // if (
+    //   $route == 'node.add' ||
+    //   $route == 'entity.node.content_translation_add' ||
+    //   $route == 'quick_node_clone.node.quick_clone' ||
+    //   $route == 'entity.node.edit_form' ||
+    //   $route == 'entity.group_content.create_form'
+    // ) {
+    //   $variables['attributes']['class'][] = 'gin--edit-form';
+    // }
 
     // Only add gin--classic-toolbar class if user has permission.
-    if (!\Drupal::currentUser()->hasPermission('access toolbar')) {
-      return;
-    }
+    // if (!\Drupal::currentUser()->hasPermission('access toolbar')) {
+    //   return;
+    // }
 
-    // Check if classic_toolbar is active.
-    if ($toolbar === 1) {
-      $variables['attributes']['class'][] = 'gin--classic-toolbar';
-    }
-    // If modern horizontal Toolbar is active.
-    elseif ($toolbar === 'horizontal') {
-      $variables['attributes']['class'][] = 'gin--horizontal-toolbar';
-    }
-    // Sidebar toolbar.
-    else {
-      $variables['attributes']['class'][] = 'gin--vertical-toolbar';
-    }
+    // // Check if classic_toolbar is active.
+    // if ($toolbar === 1) {
+    //   $variables['attributes']['class'][] = 'gin--classic-toolbar';
+    // }
+    // // If modern horizontal Toolbar is active.
+    // elseif ($toolbar === 'horizontal') {
+    //   $variables['attributes']['class'][] = 'gin--horizontal-toolbar';
+    // }
+    // // Sidebar toolbar.
+    // else {
+    //   $variables['attributes']['class'][] = 'gin--vertical-toolbar';
+    // }
 
     // Gin secondary toolbar.
-    if ($toolbar !== 1) {
-      $variables['page']['custom_gin_secondary_toolbar'] = [
-        '#type' => 'toolbar',
-        '#access' => \Drupal::currentUser()->hasPermission('access toolbar'),
-        '#cache' => [
-          'keys' => ['toolbar_secondary'],
-          'contexts' => ['user.permissions'],
-        ],
-        '#attributes' => [
-          'id' => 'toolbar-administration-secondary',
-        ],
-      ];
-    }
+    // if ($toolbar !== 1) {
+    //   $variables['page']['custom_gin_secondary_toolbar'] = [
+    //     '#type' => 'toolbar',
+    //     '#access' => \Drupal::currentUser()->hasPermission('access toolbar'),
+    //     '#cache' => [
+    //       'keys' => ['toolbar_secondary'],
+    //       'contexts' => ['user.permissions'],
+    //     ],
+    //     '#attributes' => [
+    //       'id' => 'toolbar-administration-secondary',
+    //     ],
+    //   ];
+    // }
   }
 }
 
@@ -181,224 +181,224 @@ function custom_gin_preprocess_dropbutton_wrapper(&$variables) {
 /**
  * Implements form_alter_HOOK() for some major form changes.
  */
-function custom_gin_form_alter(&$form, $form_state, $form_id) {
-  // Get route.
-  $route = \Drupal::routeMatch()->getRouteName();
+// function custom_gin_form_alter(&$form, $form_state, $form_id) {
+//   // Get route.
+//   $route = \Drupal::routeMatch()->getRouteName();
 
-  // Forms to alter.
-  if (
-    ($route == 'node.add' ||
-      $route == 'entity.node.content_translation_add' ||
-      $route == 'quick_node_clone.node.quick_clone' ||
-      $route == 'entity.node.edit_form' ||
-      ($route == 'entity.group_content.create_form' && strpos($form_id, 'group_node') === FALSE)) &&
-    strpos($form_id, 'views_form_media_library_widget_') === FALSE
-  ) {
-    // Submit change weight.
-    if (isset($form['actions']['submit'])) {
-      $form['actions']['submit']['#weight'] = '99';
-    }
+//   // Forms to alter.
+//   if (
+//     ($route == 'node.add' ||
+//       $route == 'entity.node.content_translation_add' ||
+//       $route == 'quick_node_clone.node.quick_clone' ||
+//       $route == 'entity.node.edit_form' ||
+//       ($route == 'entity.group_content.create_form' && strpos($form_id, 'group_node') === FALSE)) &&
+//     strpos($form_id, 'views_form_media_library_widget_') === FALSE
+//   ) {
+//     // Submit change weight.
+//     if (isset($form['actions']['submit'])) {
+//       $form['actions']['submit']['#weight'] = '99';
+//     }
 
-    if (isset($form['actions'])) {
-      // Create custom_gin_sticky group.
-      $form['custom_gin_sticky'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => [
-            'gin-sticky',
-          ],
-        ],
-      ];
-      // Assign status to custom_gin_sticky.
-      $form['status']['#group'] = 'custom_gin_sticky';
+//     if (isset($form['actions'])) {
+//       // Create custom_gin_sticky group.
+//       $form['custom_gin_sticky'] = [
+//         '#type' => 'container',
+//         '#attributes' => [
+//           'class' => [
+//             'gin-sticky',
+//           ],
+//         ],
+//       ];
+//       // Assign status to custom_gin_sticky.
+//       $form['status']['#group'] = 'custom_gin_sticky';
 
-      // Create actions group.
-      $form['custom_gin_sticky']['actions'] = [
-        '#type' => 'actions',
-        '#weight' => 130,
-      ];
-      // Add Submit to custom_gin_sticky actions.
-      $form['custom_gin_sticky']['actions']['submit'] = ($form['actions']['submit']) ?? [];
-      // Add Preview to custom_gin_sticky actions.
-      $form['custom_gin_sticky']['actions']['preview'] = ($form['actions']['preview']) ?? [];
+//       // Create actions group.
+//       $form['custom_gin_sticky']['actions'] = [
+//         '#type' => 'actions',
+//         '#weight' => 130,
+//       ];
+//       // Add Submit to custom_gin_sticky actions.
+//       $form['custom_gin_sticky']['actions']['submit'] = ($form['actions']['submit']) ?? [];
+//       // Add Preview to custom_gin_sticky actions.
+//       $form['custom_gin_sticky']['actions']['preview'] = ($form['actions']['preview']) ?? [];
 
-      // Create custom_gin_sidebar group.
-      $form['custom_gin_sidebar'] = [
-        '#group' => 'meta',
-        '#type' => 'container',
-        '#weight' => 99,
-        '#attributes' => [
-          'class' => [
-            'gin-sidebar',
-          ],
-        ],
-      ];
-      // Copy footer over.
-      $form['custom_gin_sidebar']['footer'] = ($form['footer']) ?? [];
-      // Copy actions over.
-      $form['custom_gin_sidebar']['actions'] = ($form['actions']) ?? [];
-      // Unset previous added preview & submit.
-      unset($form['custom_gin_sidebar']['actions']['preview']);
-      unset($form['custom_gin_sidebar']['actions']['submit']);
-    }
-  }
+//       // Create custom_gin_sidebar group.
+//       $form['custom_gin_sidebar'] = [
+//         '#group' => 'meta',
+//         '#type' => 'container',
+//         '#weight' => 99,
+//         '#attributes' => [
+//           'class' => [
+//             'gin-sidebar',
+//           ],
+//         ],
+//       ];
+//       // Copy footer over.
+//       $form['custom_gin_sidebar']['footer'] = ($form['footer']) ?? [];
+//       // Copy actions over.
+//       $form['custom_gin_sidebar']['actions'] = ($form['actions']) ?? [];
+//       // Unset previous added preview & submit.
+//       unset($form['custom_gin_sidebar']['actions']['preview']);
+//       unset($form['custom_gin_sidebar']['actions']['submit']);
+//     }
+//   }
 
-  // If not logged in hide changed and author node info on add forms.
-  $not_logged_in = \Drupal::currentUser()->isAnonymous();
-  $route = \Drupal::routeMatch()->getRouteName();
+//   // If not logged in hide changed and author node info on add forms.
+//   $not_logged_in = \Drupal::currentUser()->isAnonymous();
+//   $route = \Drupal::routeMatch()->getRouteName();
 
-  if ($not_logged_in && $route == 'node.add') {
-    unset($form['meta']['changed']);
-    unset($form['meta']['author']);
-  }
+//   if ($not_logged_in && $route == 'node.add') {
+//     unset($form['meta']['changed']);
+//     unset($form['meta']['author']);
+//   }
 
-  // User form (Login, Register or Forgot password).
-  if (strpos($form_id, 'user_login') !== FALSE || strpos($form_id, 'user_register') !== FALSE || strpos($form_id, 'user_pass') !== FALSE) {
-    $form['actions']['submit']['#attributes']['class'][] = 'button--primary';
-  }
+//   // User form (Login, Register or Forgot password).
+//   if (strpos($form_id, 'user_login') !== FALSE || strpos($form_id, 'user_register') !== FALSE || strpos($form_id, 'user_pass') !== FALSE) {
+//     $form['actions']['submit']['#attributes']['class'][] = 'button--primary';
+//   }
 
-  // Bulk forms: update action & actions to small variants.
-  if (strpos($form_id, 'views_form') !== FALSE) {
-    if (isset($form['header'])) {
-      $bulk_form = current(preg_grep('/_bulk_form/', array_keys($form['header'])));
+//   // Bulk forms: update action & actions to small variants.
+//   if (strpos($form_id, 'views_form') !== FALSE) {
+//     if (isset($form['header'])) {
+//       $bulk_form = current(preg_grep('/_bulk_form/', array_keys($form['header'])));
 
-      if (isset($form['header'][$bulk_form])) {
-        $form['header'][$bulk_form]['action']['#attributes']['class'][] = 'form-element--type-select--small';
-        $form['header'][$bulk_form]['actions']['submit']['#attributes']['class'][] = 'button--small';
+//       if (isset($form['header'][$bulk_form])) {
+//         $form['header'][$bulk_form]['action']['#attributes']['class'][] = 'form-element--type-select--small';
+//         $form['header'][$bulk_form]['actions']['submit']['#attributes']['class'][] = 'button--small';
 
-        // Remove double entry of submit button.
-        unset($form['actions']['submit']);
-      }
-    }
-  }
-}
+//         // Remove double entry of submit button.
+//         unset($form['actions']['submit']);
+//       }
+//     }
+//   }
+// }
 
 /**
  * Implements form_user_form_alter().
  */
-function custom_gin_form_user_form_alter(&$form, FormStateInterface $form_state) {
-  /** @var \Drupal\user\UserInterface $user */
-  $user = $form_state->getBuildInfo()['callback_object']->getEntity();
+// function custom_gin_form_user_form_alter(&$form, FormStateInterface $form_state) {
+//   /** @var \Drupal\user\UserInterface $user */
+//   $user = $form_state->getBuildInfo()['callback_object']->getEntity();
 
-  if ($user->id()) {
-    /** @var \Drupal\user\UserDataInterface $userData */
-    $userData = Drupal::service('user.data');
-    $enabledUserOverrides = $userData->get('custom_gin', $user->id(), 'enable_user_settings');
-    $darkModeValue = $userData->get('custom_gin', $user->id(), 'enable_darkmode');
+//   if ($user->id()) {
+//     /** @var \Drupal\user\UserDataInterface $userData */
+//     $userData = Drupal::service('user.data');
+//     $enabledUserOverrides = $userData->get('custom_gin', $user->id(), 'enable_user_settings');
+//     $darkModeValue = $userData->get('custom_gin', $user->id(), 'enable_darkmode');
 
-    if ($darkModeValue == NULL) {
-      $darkModeValue = theme_get_setting('enable_darkmode') == TRUE ? TRUE : FALSE;
-    }
+//     if ($darkModeValue == NULL) {
+//       $darkModeValue = theme_get_setting('enable_darkmode') == TRUE ? TRUE : FALSE;
+//     }
 
-    // Inject the settings for the dark mode feauture.
-    $form['custom_gin_theme_settings'] = [
-      '#type' => 'details',
-      '#title' => t('Admin theme settings'),
-      '#open' => TRUE,
-      '#weight' => 90,
-    ];
+//     // Inject the settings for the dark mode feauture.
+//     $form['custom_gin_theme_settings'] = [
+//       '#type' => 'details',
+//       '#title' => t('Admin theme settings'),
+//       '#open' => TRUE,
+//       '#weight' => 90,
+//     ];
 
-    $form['custom_gin_theme_settings']['enable_user_settings'] = [
-      '#type' => 'checkbox',
-      '#title' => t('Enable overrides'),
-      '#description' => t("Enables default admin theme overrides."),
-      '#default_value' => $enabledUserOverrides,
-      '#weight' => 0,
-    ];
+//     $form['custom_gin_theme_settings']['enable_user_settings'] = [
+//       '#type' => 'checkbox',
+//       '#title' => t('Enable overrides'),
+//       '#description' => t("Enables default admin theme overrides."),
+//       '#default_value' => $enabledUserOverrides,
+//       '#weight' => 0,
+//     ];
 
-    $form['custom_gin_theme_settings']['user_settings'] = [
-      '#type' => 'container',
-      '#states' => [
-        // Show if met.
-        'visible' => [
-          ':input[name="enable_user_settings"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
+//     $form['custom_gin_theme_settings']['user_settings'] = [
+//       '#type' => 'container',
+//       '#states' => [
+//         // Show if met.
+//         'visible' => [
+//           ':input[name="enable_user_settings"]' => ['checked' => TRUE],
+//         ],
+//       ],
+//     ];
 
-    $form['custom_gin_theme_settings']['user_settings']['enable_darkmode'] = [
-      '#type' => 'checkbox',
-      '#title' => t('Enable Darkmode (BETA)'),
-      '#description' => t("Enables Darkmode for the admin interface."),
-      '#default_value' => $darkModeValue !== NULL ? $darkModeValue : 0,
-      '#weight' => 0,
-    ];
+//     $form['custom_gin_theme_settings']['user_settings']['enable_darkmode'] = [
+//       '#type' => 'checkbox',
+//       '#title' => t('Enable Darkmode (BETA)'),
+//       '#description' => t("Enables Darkmode for the admin interface."),
+//       '#default_value' => $darkModeValue !== NULL ? $darkModeValue : 0,
+//       '#weight' => 0,
+//     ];
 
-    $accentColorPresetValue = $userData->get('custom_gin', $user->id(), 'preset_accent_color');
+//     $accentColorPresetValue = $userData->get('custom_gin', $user->id(), 'preset_accent_color');
 
-    if ($accentColorPresetValue == NULL) {
-      $accentColorPresetValue = theme_get_setting('preset_accent_color');
-    }
+//     if ($accentColorPresetValue == NULL) {
+//       $accentColorPresetValue = theme_get_setting('preset_accent_color');
+//     }
 
-    // Accent color setting.
-    $form['custom_gin_theme_settings']['user_settings']['preset_accent_color'] = [
-      '#type' => 'radios',
-      '#title' => t('Accent color'),
-      '#default_value' => $accentColorPresetValue,
-      '#options' => _custom_gin_get_accent_color_presets(),
-      '#after_build' => ['_custom_gin_accent_radios'],
-    ];
+//     // Accent color setting.
+//     $form['custom_gin_theme_settings']['user_settings']['preset_accent_color'] = [
+//       '#type' => 'radios',
+//       '#title' => t('Accent color'),
+//       '#default_value' => $accentColorPresetValue,
+//       '#options' => _custom_gin_get_accent_color_presets(),
+//       '#after_build' => ['_custom_gin_accent_radios'],
+//     ];
 
-    $accentColorValue = $userData->get('custom_gin', $user->id(), 'accent_color');
+//     $accentColorValue = $userData->get('custom_gin', $user->id(), 'accent_color');
 
-    if ($accentColorValue == NULL) {
-      $accentColorValue = theme_get_setting('accent_color');
-    }
+//     if ($accentColorValue == NULL) {
+//       $accentColorValue = theme_get_setting('accent_color');
+//     }
 
-    // Main Accent color setting.
-    $form['custom_gin_theme_settings']['user_settings']['accent_color'] = [
-      '#type' => 'textfield',
-      '#placeholder' => '#77777',
-      '#title' => t('Accent color'),
-      '#description' => t('Use with caution, values should meet a11y criteria.'),
-      '#default_value' => $accentColorValue,
-      '#min' => '7',
-      '#max' => '7',
-      '#size' => '7',
-      '#states' => [
-        // Show if met.
-        'visible' => [
-          ':input[name="preset_accent_color"]' => ['value' => 'custom'],
-        ],
-      ],
-    ];
+//     // Main Accent color setting.
+//     $form['custom_gin_theme_settings']['user_settings']['accent_color'] = [
+//       '#type' => 'textfield',
+//       '#placeholder' => '#77777',
+//       '#title' => t('Accent color'),
+//       '#description' => t('Use with caution, values should meet a11y criteria.'),
+//       '#default_value' => $accentColorValue,
+//       '#min' => '7',
+//       '#max' => '7',
+//       '#size' => '7',
+//       '#states' => [
+//         // Show if met.
+//         'visible' => [
+//           ':input[name="preset_accent_color"]' => ['value' => 'custom'],
+//         ],
+//       ],
+//     ];
 
-    $hcm_value = $userData->get('custom_gin', $user->id(), 'high_contrast_mode');
+//     $hcm_value = $userData->get('custom_gin', $user->id(), 'high_contrast_mode');
 
-    if ($hcm_value == NULL) {
-      $hcm_value = theme_get_setting('high_contrast_mode') == TRUE ? TRUE : FALSE;
-    }
+//     if ($hcm_value == NULL) {
+//       $hcm_value = theme_get_setting('high_contrast_mode') == TRUE ? TRUE : FALSE;
+//     }
 
-    $form['custom_gin_theme_settings']['user_settings']['high_contrast_mode'] = [
-      '#type' => 'checkbox',
-      '#title' => ('Increase contrast (EXPERIMENTAL)'),
-      '#description' => t("Enables high contrast mode."),
-      '#default_value' => $hcm_value !== NULL ? $hcm_value : 0,
-      '#weight' => 0,
-    ];
+//     $form['custom_gin_theme_settings']['user_settings']['high_contrast_mode'] = [
+//       '#type' => 'checkbox',
+//       '#title' => ('Increase contrast (EXPERIMENTAL)'),
+//       '#description' => t("Enables high contrast mode."),
+//       '#default_value' => $hcm_value !== NULL ? $hcm_value : 0,
+//       '#weight' => 0,
+//     ];
 
-    $toolbarValue = $userData->get('custom_gin', $user->id(), 'classic_toolbar');
+//     $toolbarValue = $userData->get('custom_gin', $user->id(), 'classic_toolbar');
 
-    if ($toolbarValue == NULL) {
-      $toolbarValue = theme_get_setting('classic_toolbar');
-    }
+//     if ($toolbarValue == NULL) {
+//       $toolbarValue = theme_get_setting('classic_toolbar');
+//     }
 
-    // Classic Toolbar user setting.
-    $form['custom_gin_theme_settings']['user_settings']['classic_toolbar'] = [
-      '#type' => 'radios',
-      '#title' => t('Drupal Toolbar'),
-      '#description' => t('Choose Drupal Toolbar.'),
-      '#default_value' => $toolbarValue,
-      '#options' => _custom_gin_get_toolbar_presets(),
-      '#after_build' => ['_custom_gin_toolbar_radios'],
-    ];
+//     // Classic Toolbar user setting.
+//     $form['custom_gin_theme_settings']['user_settings']['classic_toolbar'] = [
+//       '#type' => 'radios',
+//       '#title' => t('Drupal Toolbar'),
+//       '#description' => t('Choose Drupal Toolbar.'),
+//       '#default_value' => $toolbarValue,
+//       '#options' => _custom_gin_get_toolbar_presets(),
+//       '#after_build' => ['_custom_gin_toolbar_radios'],
+//     ];
 
-    // Attach custom js.
-    $form['#attached']['library'][] = 'gin/custom_gin_settings';
+//     // Attach custom js.
+//     //$form['#attached']['library'][] = 'gin/custom_gin_settings';
 
-    array_unshift($form['actions']['submit']['#submit'], '_custom_gin_user_form_submit');
-  }
-}
+//     //array_unshift($form['actions']['submit']['#submit'], '_custom_gin_user_form_submit');
+//   }
+// }
 
 /**
  * Implements hook_preprocess_menu().
