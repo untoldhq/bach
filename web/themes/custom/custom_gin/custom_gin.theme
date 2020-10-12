@@ -186,6 +186,11 @@ function custom_gin_bach_roster_validate(&$form, FormStateInterface $form_state)
   $locked = $week->get('field_locked')->getValue();
   $limit = $week->get('field_contestant_limit')->getValue();
 
+  if ($locked[0]['value']) {
+    $form_state->setErrorByName('title', 'This week\'s rosters are LOCKED. #petishthecommish.');
+    $form_state->setRebuild();
+  }
+
   $contestants = array();
   foreach ($form_contestants as $fcont) {
     if (is_array($fcont) && $fcont['target_id']) {
