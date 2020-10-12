@@ -86,6 +86,19 @@ function getLockedWeeks() {
   return $connection->query($sql)->fetchAll();
 }
 
+function getLastWeek() {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title, l.field_locked_value as locked from {node_field_data} as n
+  INNER JOIN {node__field_locked} as l
+  WHERE n.type = 'scoring_increment'
+  AND l.entity_id = n.nid
+  AND n.status = 1
+  ORDER BY n.created DESC
+  LIMIT 1;";
+
+  return $connection->query($sql)->fetchObject();
+}
+
 function getAllWeeks() {
   $connection = \Drupal::database();
   $sql = "SELECT n.nid, n.title, l.field_locked_value as locked from {node_field_data} as n
@@ -448,6 +461,61 @@ function rosterSetterHelper() {
 
       $return .= '<p><strong>' . $week->title . ':</strong> ' . $help . '</p>';
     }
+  }
+
+  $results = array(
+    '#markup' => $return,
+  );
+
+  return [
+    'results' => $results,
+  ];
+}
+
+function rosterSetterHelperSingleWeek() {
+  $week = getLastWeek();
+  $return = '';
+  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+  $node = \Drupal::routeMatch()->getParameter('node');
+  if (!$node instanceof \Drupal\node\NodeInterface || !$week) {
+    return [
+      'results' => array(
+        '#markup' => '&nbsp;',
+      )
+    ];
+  }
+
+  $account_id = $node->getOwner()->id();
+  $current_user_id =  \Drupal::currentUser()->id();
+  $team = getSingleTeamByUID($account_id);
+  if (!$team) {
+    $no_results_text = '';
+    if ($account_id == $current_user_id) {
+      $no_results_text = '<p><a href="/node/add/team" class="button button--action button--primary">Create your Team</a></p>';
+    }
+
+    return [
+      'results' => array(
+        '#markup' => $no_results_text,
+      )
+    ];
+  }
+
+  if ($week) {
+    $help = '';
+    $roster = \Drupal::entityQuery('node')
+      ->condition('type', 'roster')
+      ->condition('status', 1)
+      ->condition('field_scoring_increment', $week->nid)
+      ->condition('field_team', $team->nid)
+      ->execute();
+
+    $nodes = $node_storage->loadMultiple($roster);
+    if ($account_id == $current_user_id && !$nodes && !$week->locked) {
+      $help = '<a href="/node/add/roster?edit[field_team][widget][0][target_id]=' . $team->nid . '&edit[field_scoring_increment][widget][0][target_id]=' . $week->nid . '" class="button button--action button--primary">Set your Lineup this Week</a>';
+    }
+
+    $return = $help;
   }
 
   $results = array(
