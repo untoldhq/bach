@@ -295,3 +295,10 @@ blockquote {
   outline: none;
   box-shadow: none;
 }
+
+.node-roster-form {
+  .field--name-field-scoring-increment,
+  .field--name-field-team {
+    display: none;
+  }
+}

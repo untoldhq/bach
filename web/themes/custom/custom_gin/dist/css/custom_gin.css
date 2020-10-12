@@ -4942,5 +4942,9 @@ blockquote {
   -webkit-box-shadow: none;
           box-shadow: none; }
 
+.node-roster-form .field--name-field-scoring-increment,
+.node-roster-form .field--name-field-team {
+  display: none; }
+
 
 /*# sourceMappingURL=custom_gin.css.map*/

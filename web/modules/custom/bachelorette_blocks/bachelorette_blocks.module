@@ -9,6 +9,7 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Link;
+use Drupal\node\Entity\Node;
 
 /**
  * Implements hook_help().
@@ -36,6 +37,18 @@ function bachelorette_blocks_theme() {
       ],
     ],
   ];
+}
+
+function getSingleTeamByUID($uid) {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title from {node_field_data} as n
+  WHERE n.type = 'team'
+  AND n.uid = :uid
+  AND n.status = 1
+  ORDER BY n.created DESC
+  LIMIT 1;";
+
+  return $connection->query($sql, [':uid' => $uid])->fetchObject();
 }
 
 function getAllTeams() {
@@ -68,6 +81,17 @@ function getLockedWeeks() {
   WHERE n.type = 'scoring_increment'
   AND l.entity_id = n.nid
   AND l.field_locked_value = 1
+  AND n.status = 1;";
+
+  return $connection->query($sql)->fetchAll();
+}
+
+function getAllWeeks() {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title, l.field_locked_value as locked from {node_field_data} as n
+  INNER JOIN {node__field_locked} as l
+  WHERE n.type = 'scoring_increment'
+  AND l.entity_id = n.nid
   AND n.status = 1;";
 
   return $connection->query($sql)->fetchAll();
@@ -109,6 +133,9 @@ function getWeeklyPointsByTeam($team_id, $week_id) {
   AND c.entity_id = s.entity_id
   AND t.entity_id = c.entity_id;";
   $contestant_ids = $connection->query($sql, [':tid' => $team_id, ':wid' => $week_id])->fetchCol();
+  if (!$contestant_ids || count($contestant_ids) < 1) {
+    return 0;
+  }
 
   $connection = \Drupal::database();
   $sql = "SELECT SUM(p.field_points_value) as points from {node__field_scoring_events} as e
@@ -136,7 +163,9 @@ function getWeeklyPointsByTeam($team_id, $week_id) {
  */
 function getRosterResults() {
   $node = \Drupal::routeMatch()->getParameter('node');
-  $results = '';
+  $results = array(
+    '#markup' => '',
+  );
   if ($node instanceof \Drupal\node\NodeInterface) {
     $header = array(
       array('data' => t('Contestant')),
@@ -169,6 +198,7 @@ function getRosterResults() {
     $result = $connection->query($sql, [':wid' => $week_id, ':cids[]' => $contestant_ids]);
 
     $total = 0;
+    $rows = array();
     foreach ($result as $record) {
       $total += $record->field_points_value;
       $rows[] = array(
@@ -299,7 +329,9 @@ function getLastWeekResults() {
 
 function getWeeklyResults() {
   $node = \Drupal::routeMatch()->getParameter('node');
-  $results = '';
+  $results = array(
+    '#markup' => '',
+  );
   if ($node instanceof \Drupal\node\NodeInterface) {
     $team_id = $node->id();
     $weeks = getLockedWeeksByTeam($team_id);
@@ -344,6 +376,76 @@ function getWeeklyResults() {
       ),
     );
   }
+
+  return [
+    'results' => $results,
+  ];
+}
+
+function rosterSetterHelper() {
+  $weeks = getAllWeeks();
+  $return = '';
+  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+  $path = \Drupal::request()->getpathInfo();
+  $arg = explode('/', $path);
+  if ($arg[1] != 'user' || !is_numeric($arg[2])) {
+    return [
+      'results' => array(
+        '#markup' => '&nbsp;',
+      )
+    ];
+  }
+
+  $account_id = $arg[2];
+  $current_user_id =  \Drupal::currentUser()->id();
+  $team = getSingleTeamByUID($account_id);
+  if (!$team) {
+    $no_results_text = '';
+    if ($account_id == $current_user_id) {
+      $no_results_text = '<p><a href="/node/add/team" class="button button--action button--primary">Create your Team</a></p>';
+    }
+
+    return [
+      'results' => array(
+        '#markup' => $no_results_text,
+      )
+    ];
+  }
+
+  if ($weeks) {
+    // print_r($weeks);
+    foreach ($weeks as $week) {
+      $roster = \Drupal::entityQuery('node')
+       ->condition('type', 'roster')
+       ->condition('status', 1)
+       ->condition('field_scoring_increment', $week->nid)
+       ->condition('field_team', $team->nid)
+       ->execute();
+
+      $nodes = $node_storage->loadMultiple($roster);
+
+      $help = 'Roster not yet set';
+      if ($account_id == $current_user_id) {
+        if ($week->locked) {
+          $help = 'Sorry, looks like you missed this week. #petishthecommish';
+        } else {
+          $help = '<a href="/node/add/roster?edit[field_team][widget][0][target_id]=' . $team->nid . '&edit[field_scoring_increment][widget][0][target_id]=' . $week->nid . '" class="button button--action button--primary">Set your Roster</a>';
+        }
+      }
+      if ($nodes) {
+        $roster_help = $week->locked ? 'View Roster' : 'View and Manage Roster';
+        foreach($nodes as $node) {
+          $help = '<a href="/node/' . $node->id() . '"> ' . $roster_help . '</a>';
+        }
+      }
+
+      $return .= '<p><strong>' . $week->title . ':</strong> ' . $help . '</p>';
+    }
+  }
+
+  $results = array(
+    '#markup' => $return,
+  );
 
   return [
     'results' => $results,
