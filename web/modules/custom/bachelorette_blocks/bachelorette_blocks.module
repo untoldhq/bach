@@ -413,7 +413,7 @@ function rosterSetterHelper() {
   }
 
   if ($weeks) {
-    // print_r($weeks);
+    $return = '<h3>Team: <a href="/node/' . $team->nid . '">' . $team->title . '</a></h3>';
     foreach ($weeks as $week) {
       $roster = \Drupal::entityQuery('node')
        ->condition('type', 'roster')
