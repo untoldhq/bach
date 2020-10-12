@@ -178,12 +178,48 @@ function custom_gin_preprocess_dropbutton_wrapper(&$variables) {
   $variables['children'] = Markup::create($children);
 }
 
+function custom_gin_bach_roster_validate(&$form, FormStateInterface $form_state) {
+  $increment = $form_state->getValue('field_scoring_increment');
+  $form_contestants = $form_state->getValue('field_contestants');
+
+  $week = \Drupal\node\Entity\Node::load($increment[0]['target_id']);
+  $locked = $week->get('field_locked')->getValue();
+  $limit = $week->get('field_contestant_limit')->getValue();
+
+  $contestants = array();
+  foreach ($form_contestants as $fcont) {
+    if (is_array($fcont) && $fcont['target_id']) {
+      $contestants[] = $fcont['target_id'];
+    }
+  }
+
+  $cont_count = count($contestants);
+  if ($cont_count > $limit[0]['value']) {
+    $form_state->setErrorByName(
+      'field_contestants',
+      'You\'ve got too many Contestants chosen. The limit this week is ' . $limit[0]['value'] . '.'
+    );
+    $form_state->setRebuild();
+  }
+
+  if ($cont_count != count(array_unique($contestants))) {
+    $form_state->setErrorByName(
+      'field_contestants',
+      'Looks like you\'ve got duplicate contestants.'
+    );
+    $form_state->setRebuild();
+  }
+}
+
 /**
  * Implements form_alter_HOOK() for some major form changes.
  */
-// function custom_gin_form_alter(&$form, $form_state, $form_id) {
-//   // Get route.
-//   $route = \Drupal::routeMatch()->getRouteName();
+function custom_gin_form_alter(&$form, $form_state, $form_id) {
+  // Get route.
+  if ($form_id === 'node_roster_edit_form' || $form_id === 'node_roster_form') {
+    $form['#validate'][] = 'custom_gin_bach_roster_validate';
+  }
+}
 
 //   // Forms to alter.
 //   if (

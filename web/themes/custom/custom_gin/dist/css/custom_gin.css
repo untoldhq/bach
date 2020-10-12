@@ -4943,7 +4943,8 @@ blockquote {
           box-shadow: none; }
 
 .node-roster-form .field--name-field-scoring-increment,
-.node-roster-form .field--name-field-team {
+.node-roster-form .field--name-field-team, .node-roster-edit-form .field--name-field-scoring-increment,
+.node-roster-edit-form .field--name-field-team {
   display: none; }
 
 
