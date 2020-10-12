@@ -433,7 +433,7 @@ function rosterSetterHelper() {
         }
       }
       if ($nodes) {
-        $roster_help = $week->locked ? 'View Roster' : 'View and Manage Roster';
+        $roster_help = !$week->locked ? ($account_id == $current_user_id ? 'View and Manage Roster' : 'View Roster') : 'View Roster';
         foreach($nodes as $node) {
           $help = '<a href="/node/' . $node->id() . '"> ' . $roster_help . '</a>';
         }
