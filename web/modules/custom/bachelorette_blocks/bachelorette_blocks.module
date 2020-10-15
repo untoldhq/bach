@@ -282,6 +282,12 @@ function getTeamScoring() {
     );
   }
 
+  $totals = array();
+  foreach ($rows as $key => $row) {
+    $totals[$key] = $row['points']['data'];
+  }
+  array_multisort($totals, SORT_DESC, $rows);
+
   $header = array(
     array('data' => t('Team')),
     array('data' => t('Points')),
@@ -326,6 +332,12 @@ function getLastWeekResults() {
       ),
     );
   }
+
+  $totals = array();
+  foreach ($rows as $key => $row) {
+    $totals[$key] = $row['points']['data'];
+  }
+  array_multisort($totals, SORT_DESC, $rows);
 
   $header = array(
     array('data' => t('Team')),
