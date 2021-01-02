@@ -60,13 +60,20 @@ function getAllTeams() {
   return $connection->query($sql)->fetchAll();
 }
 
-function getLastLockedWeek() {
+function getAllSeasons() {
   $connection = \Drupal::database();
   $sql = "SELECT n.nid, n.title from {node_field_data} as n
-  INNER JOIN {node__field_locked} as l
-  WHERE n.type = 'scoring_increment'
-  AND l.entity_id = n.nid
-  AND l.field_locked_value = 1
+  WHERE n.type = 'season'
+  AND n.status = 1
+  ORDER BY n.created DESC;";
+
+  return $connection->query($sql)->fetchAll();
+}
+
+function getMostRecentSeason() {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title from {node_field_data} as n
+  WHERE n.type = 'season'
   AND n.status = 1
   ORDER BY n.created DESC
   LIMIT 1;";
@@ -74,16 +81,38 @@ function getLastLockedWeek() {
   return $connection->query($sql)->fetchObject();
 }
 
-function getLockedWeeks() {
+function getLastLockedWeek() {
+  $season = getMostRecentSeason();
+
   $connection = \Drupal::database();
   $sql = "SELECT n.nid, n.title from {node_field_data} as n
   INNER JOIN {node__field_locked} as l
+  INNER JOIN {node__field_season} as z
   WHERE n.type = 'scoring_increment'
   AND l.entity_id = n.nid
+  AND z.entity_id = n.nid
+  AND z.field_season_target_id = :zid
+  AND l.field_locked_value = 1
+  AND n.status = 1
+  ORDER BY n.created DESC
+  LIMIT 1;";
+
+  return $connection->query($sql, [':zid' => $season->nid])->fetchObject();
+}
+
+function getLockedWeeks($season_id) {
+  $connection = \Drupal::database();
+  $sql = "SELECT n.nid, n.title from {node_field_data} as n
+  INNER JOIN {node__field_locked} as l
+  INNER JOIN {node__field_season} as z
+  WHERE n.type = 'scoring_increment'
+  AND l.entity_id = n.nid
+  AND z.entity_id = n.nid
+  AND z.field_season_target_id = :zid
   AND l.field_locked_value = 1
   AND n.status = 1;";
 
-  return $connection->query($sql)->fetchAll();
+  return $connection->query($sql, [':zid' => $season_id])->fetchAll();
 }
 
 function getLastWeek() {
@@ -99,32 +128,38 @@ function getLastWeek() {
   return $connection->query($sql)->fetchObject();
 }
 
-function getAllWeeks() {
+function getAllWeeks($season_id) {
   $connection = \Drupal::database();
   $sql = "SELECT n.nid, n.title, l.field_locked_value as locked from {node_field_data} as n
   INNER JOIN {node__field_locked} as l
+  INNER JOIN {node__field_season} as z
   WHERE n.type = 'scoring_increment'
   AND l.entity_id = n.nid
+  AND z.entity_id = n.nid
+  AND z.field_season_target_id = :zid
   AND n.status = 1;";
 
-  return $connection->query($sql)->fetchAll();
+  return $connection->query($sql, [':zid' => $season_id])->fetchAll();
 }
 
-function getLockedWeeksByTeam($team_id) {
+function getLockedWeeksByTeam($team_id, $season_id) {
   $connection = \Drupal::database();
   $sql = "SELECT n.nid, n.title, s.entity_id as {roster_nid} from node_field_data as n
   INNER JOIN {node__field_locked} as l
   INNER JOIN {node__field_scoring_increment} as s
   INNER JOIN {node__field_team} as t
+  INNER JOIN {node__field_season} as z
   WHERE n.type = 'scoring_increment'
   AND l.entity_id = n.nid
   AND s.field_scoring_increment_target_id = n.nid
   AND t.entity_id = s.entity_id
   AND t.field_team_target_id = :tid
+  AND z.entity_id = n.nid
+  AND z.field_season_target_id = :zid
   AND l.field_locked_value = 1
   AND n.status = 1;";
 
-  return $connection->query($sql, [':tid' => $team_id])->fetchAll();
+  return $connection->query($sql, [':tid' => $team_id, ':zid' => $season_id])->fetchAll();
 }
 
 /**
@@ -261,9 +296,18 @@ function getRosterResults() {
  * Gather Roster results
  *
  */
-function getTeamScoring() {
+function getTeamScoring($usePageArgumentForSeason = false) {
   $teams = getAllTeams();
-  $weeks = getLockedWeeks();
+  $season = getMostRecentSeason();
+  $weeks = getLockedWeeks($season->nid);
+  if ($usePageArgumentForSeason) {
+    $node = \Drupal::routeMatch()->getParameter('node');
+    if ($node instanceof \Drupal\node\NodeInterface) {
+      $nid = $node->id();
+      $weeks = getLockedWeeks($nid);
+    }
+  }
+
   $rows = array();
   foreach ($teams as $team) {
     $total = 0;
@@ -366,7 +410,8 @@ function getWeeklyResults() {
   );
   if ($node instanceof \Drupal\node\NodeInterface) {
     $team_id = $node->id();
-    $weeks = getLockedWeeksByTeam($team_id);
+    $season = getMostRecentSeason();
+    $weeks = getLockedWeeksByTeam($team_id, $season->nid);
     $rows = array();
     $total = 0;
     foreach ($weeks as $week) {
@@ -415,7 +460,7 @@ function getWeeklyResults() {
 }
 
 function rosterSetterHelper() {
-  $weeks = getAllWeeks();
+  $seasons = getAllSeasons();
   $return = '';
   $node_storage = \Drupal::entityTypeManager()->getStorage('node');
   $path = \Drupal::request()->getpathInfo();
@@ -444,34 +489,40 @@ function rosterSetterHelper() {
     ];
   }
 
-  if ($weeks) {
+  if ($seasons) {
     $return = '<h3>Team: <a href="/node/' . $team->nid . '">' . $team->title . '</a></h3>';
-    foreach ($weeks as $week) {
-      $roster = \Drupal::entityQuery('node')
-       ->condition('type', 'roster')
-       ->condition('status', 1)
-       ->condition('field_scoring_increment', $week->nid)
-       ->condition('field_team', $team->nid)
-       ->execute();
+    foreach ($seasons as $season) {
+      $weeks = getAllWeeks($season->nid);
+      if ($weeks) {
+        $return .= '<br /><h4>Season: ' . $season->title . '</h4>';
+        foreach ($weeks as $week) {
+          $roster = \Drupal::entityQuery('node')
+           ->condition('type', 'roster')
+           ->condition('status', 1)
+           ->condition('field_scoring_increment', $week->nid)
+           ->condition('field_team', $team->nid)
+           ->execute();
 
-      $nodes = $node_storage->loadMultiple($roster);
+          $nodes = $node_storage->loadMultiple($roster);
 
-      $help = 'Roster not yet set';
-      if ($account_id == $current_user_id) {
-        if ($week->locked) {
-          $help = 'Sorry, looks like you missed this week. #petishthecommish';
-        } else {
-          $help = '<a href="/node/add/roster?edit[field_team][widget][0][target_id]=' . $team->nid . '&edit[field_scoring_increment][widget][0][target_id]=' . $week->nid . '" class="button button--action button--primary">Set your Roster</a>';
+          $help = 'Roster not yet set';
+          if ($account_id == $current_user_id) {
+            if ($week->locked) {
+              $help = 'Sorry, looks like you missed this week. #petishthecommish';
+            } else {
+              $help = '<a href="/node/add/roster?edit[field_team][widget][0][target_id]=' . $team->nid . '&edit[field_scoring_increment][widget][0][target_id]=' . $week->nid . '" class="button button--action button--primary">Set your Roster</a>';
+            }
+          }
+          if ($nodes) {
+            $roster_help = !$week->locked ? ($account_id == $current_user_id ? 'View and Manage Roster' : 'View Roster') : 'View Roster';
+            foreach($nodes as $node) {
+              $help = '<a href="/node/' . $node->id() . '"> ' . $roster_help . '</a>';
+            }
+          }
+
+          $return .= '<p><strong>' . $week->title . ':</strong> ' . $help . '</p>';
         }
       }
-      if ($nodes) {
-        $roster_help = !$week->locked ? ($account_id == $current_user_id ? 'View and Manage Roster' : 'View Roster') : 'View Roster';
-        foreach($nodes as $node) {
-          $help = '<a href="/node/' . $node->id() . '"> ' . $roster_help . '</a>';
-        }
-      }
-
-      $return .= '<p><strong>' . $week->title . ':</strong> ' . $help . '</p>';
     }
   }
 
